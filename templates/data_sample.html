@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Próbka danych</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .data-type-label {
+            font-style: italic;
+        }
+        .save-button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Próbka danych</h1>
+
+    <form method="POST" id="data-form">
+        <input type="hidden" id="column-info" name="column_info" value="{{ column_info|tojson }}">
+        <input type="hidden" id="sample-data" name="sample_data" value="{{ sample_data|tojson }}">
+
+        <button type="submit" class="save-button">Zapisz zmiany</button>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    {% for column_name, column_type, suggested_types in column_info %}
+                        <th>
+                            <span>{{ column_name }}</span>
+                            <br>
+                            <span class="data-type-label">{{ column_type }}</span>
+                            <br>
+                            <select name="{{ column_name }}" id="{{ column_name }}">
+                                {% for suggested_type in suggested_types %}
+                                    {% if suggested_type == column_type %}
+                                        <option value="{{ suggested_type }}" selected>{{ suggested_type }}</option>
+                                    {% else %}
+                                        <option value="{{ suggested_type }}">{{ suggested_type }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in sample_data %}
+                    <tr>
+                        {% for value in row.values() %}
+                            <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            // Obsługa zdarzenia kliknięcia przycisku "Zapisz zmiany"
+            $("#data-form").on("submit", function(e) {
+                e.preventDefault();
+
+                // Pobierz wartości wybranych typów danych dla kolumn
+                var columnInfo = {};
+                $("select").each(function() {
+                    var columnName = $(this).attr("name");
+                    var columnType = $(this).val();
+                    columnInfo[columnName] = columnType;
+                });
+
+                // Zaktualizuj etykiety typów danych
+                $(".data-type-label").each(function() {
+                    var columnName = $(this).parent().find("select").attr("name");
+                    var columnType = columnInfo[columnName];
+                    $(this).text(columnType);
+                });
+
+                // Pobierz próbkę danych
+                var sampleData = JSON.parse($("#sample-data").val());
+
+                // Zbuduj obiekt danych do wysłania
+                var dataToSend = {
+                    column_info: JSON.stringify(columnInfo),
+                    sample_data: JSON.stringify(sampleData)
+                };
+
+                // Wyślij żądanie POST do zaktualizowania typów danych
+                $.ajax({
+                    url: "/data_sample",
+                    method: "POST",
+                    data: dataToSend,
+                    success: function(response) {
+                        console.log("Zaktualizowano typy danych");
+                    },
+                    error: function(error) {
+                        console.error("Błąd podczas aktualizowania typów danych");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!-- search_table.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wyszukiwanie tabeli</title>
+</head>
+<body>
+    <h1>Wyszukiwanie tabeli</h1>
+
+    <form method="POST" action="/search_table">
+        <label for="search_query">Szukaj:</label>
+        <input type="text" id="search_query" name="search_query" placeholder="Wpisz wyszukiwaną frazę">
+        <input type="submit" value="Szukaj">
+    </form>
+
+    <h2>Wyniki wyszukiwania</h2>
+
+    {% if search_results %}
+        {% for column_name, matches in search_results %}
+            <h3>{{ column_name }}</h3>
+            {% if matches %}
+                <table>
+                    <tr>
+                        {% for column_name in column_names %}
+                            <th>{{ column_name }}</th>
+                        {% endfor %}
+                    </tr>
+                    {% for row in matches %}
+                        <tr>
+                            {% for value in row %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>Brak dopasowań dla kolumny '{{ column_name }}'.</p>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <p>Brak wyników wyszukiwania.</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Przesyłanie plików</title>
+    <style>
+        .drop-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+        }
+        .file-label {
+            font-weight: bold;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .error-message {
+            color: red;
+        }
+        .success-message {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Przesyłanie plików</h1>
+    <div class="drop-area" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+        Przeciągnij i upuść pliki tutaj lub kliknij, aby wybrać pliki.
+        <input type="file" id="file-input" name="files" multiple style="display: none;" onchange="handleFiles(event.target.files);">
+        <label for="file-input" class="file-label">Wybierz pliki</label>
+    </div>
+
+    <div id="error-container" class="error-message" style="display: none;"></div>
+    <div id="success-container" class="success-message" style="display: none;"></div>
+
+    <script>
+        function dropHandler(event) {
+            event.preventDefault();
+            var files = event.dataTransfer.files;
+            handleFiles(files);
+        }
+
+        function dragOverHandler(event) {
+            event.preventDefault();
+        }
+
+        function handleFiles(files) {
+            var errorMessage = '';
+            var successMessage = '';
+
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var extension = file.name.split('.').pop().toLowerCase();
+
+                if (extension === 'csv') {
+                    successMessage += 'Plik ' + file.name + ' został przesłany pomyślnie.<br>';
+                    uploadFile(file);
+                } else {
+                    errorMessage += 'Nieprawidłowy format pliku: ' + file.name + '. Wybierz pliki w formacie CSV.<br>';
+                }
+            }
+
+            if (errorMessage !== '') {
+                displayErrorMessage(errorMessage);
+            }
+
+            if (successMessage !== '') {
+                displaySuccessMessage(successMessage);
+            }
+        }
+
+        function uploadFile(file) {
+            var formData = new FormData();
+            formData.append('files', file);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload', true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.error_message) {
+                        displayErrorMessage(response.error_message);
+                    } else if (response.success_message) {
+                        displaySuccessMessage(response.success_message);
+                    }
+                } else {
+                    console.error('Błąd podczas przesyłania pliku ' + file.name + '.');
+                }
+            };
+            xhr.send(formData);
+        }
+
+        function displayErrorMessage(message) {
+            var errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = message;
+            errorContainer.style.display = 'block';
+        }
+
+        function displaySuccessMessage(message) {
+            var successContainer = document.getElementById('success-container');
+            successContainer.innerHTML = message;
+            successContainer.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
